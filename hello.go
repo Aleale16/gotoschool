@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"https://github.com/Aleale16/gopkg"
+
+	"github.com/Aleale16/gopkg"
 )
 
 func main() {
