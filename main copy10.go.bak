@@ -1,0 +1,104 @@
+package main
+
+import (
+	"flag"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
+	"golang.org/x/crypto/acme/autocert"
+)
+
+var (
+	SrvRunHTTPS string
+	// SrvRunHTTPSflag - store possible flags.
+	SrvRunHTTPSflag *bool
+)
+func InitFlags() {
+	SrvRunHTTPSflag = flag.Bool("s", false, "ENABLE_HTTPS flag")
+}
+
+func SetinitVars() {
+
+	SrvRunHTTPSENV, SrvRunHTTPSexists := os.LookupEnv("ENABLE_HTTPS")
+
+	if !SrvRunHTTPSexists {
+		if *SrvRunHTTPSflag {
+			SrvRunHTTPS = "HTTPS_mode_enabled"
+			fmt.Print("Set from flag: SrvRunHTTPS:", *SrvRunHTTPSflag)
+		} else {
+			fmt.Print("ENABLE_HTTPS: not set ")
+		}
+	} else {
+		SrvRunHTTPS = SrvRunHTTPSENV
+		fmt.Println("Set from ENV: SrvRunHTTPS:", SrvRunHTTPS)
+	}
+}
+
+func StatusOKHandler(w http.ResponseWriter, r *http.Request) {	
+	// A very simple health check.
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	// In the future we could report back on the status of our DB, or our cache
+	// (e.g. Redis) by performing a simple PING, and include them in the response.
+	io.WriteString(w, `{"alive": true}`)	
+}
+
+func main() {
+
+	InitFlags()
+
+	flag.Parse()
+
+	SetinitVars()
+	
+	//Check([]int32{7, 8}, 10)
+
+	//go:generate go run genconstants.go "Version" "1.2.3" "Name" "myapp" "Title" "My Application"
+
+	//staticlint.RunChecks()
+	//var return_Url string
+	//fmt.Println(return_Url)
+	//os.Exit(10)
+	//f, _ := os.OpenFile("notes.txt", os.O_RDWR|os.O_CREATE, 0755)
+	r := chi.NewRouter()
+
+	// зададим встроенные middleware, чтобы улучшить стабильность приложения
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Compress(5, "gzip"))
+
+	r.Get("/health-check", StatusOKHandler)
+
+	if SrvRunHTTPS == "HTTPS_mode_enabled" {
+		log.Print("ENABLE_HTTPS: " + "HTTPS_mode_enabled")
+		os.Setenv("ENABLE_HTTPS", SrvRunHTTPS)
+		// конструируем менеджер TLS-сертификатов
+		manager := &autocert.Manager{
+			// директория для хранения сертификатов
+			Cache:      autocert.DirCache("cache-dir"),
+			// функция, принимающая Terms of Service издателя сертификатов
+			Prompt:     autocert.AcceptTOS,
+			// перечень доменов, для которых будут поддерживаться сертификаты
+			HostPolicy: autocert.HostWhitelist("localhost", "127.0.0.1"),
+		}
+		// конструируем сервер с поддержкой TLS
+		server := &http.Server{
+			Addr:      ":443",
+			Handler:   r,
+			// для TLS-конфигурации используем менеджер сертификатов
+			TLSConfig: manager.TLSConfig(),
+		}
+		log.Fatal(server.ListenAndServeTLS("", ""))
+	} else {
+		log.Print("ENABLE_HTTPS: " + "Loaded default: NO HTTPS")
+		log.Fatal(http.ListenAndServe("localhost:8080", r))	
+	}
+
+}

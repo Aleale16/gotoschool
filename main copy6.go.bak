@@ -1,0 +1,99 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"os"
+
+	//_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
+	//"github.com/jackc/pgx"
+	//"github.com/jackc/pgx"
+	_ "github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+var db *pgxpool.Pool
+
+func main() {
+    //var ctx context.Context
+    urlExample := "postgres://postgres:1@localhost:5432/gotoschool"
+    //conn, err := pgx.Connect(context.Background(), urlExample)
+    //poolConfig, err := pgx.ParseConnectionString(os.Getenv("DATABASE_URL"))
+    os.Setenv("DATABASE_URL", urlExample)
+
+    poolConfig, err := pgxpool.ParseConfig(os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatalln("Unable to parse DATABASE_URL:", err)
+	}
+    fmt.Println(poolConfig)
+
+    db, err = pgxpool.NewWithConfig(context.Background(), poolConfig)
+    if err != nil {
+        fmt.Println("ERROR")
+        panic(err)
+    }
+    defer db.Close()
+
+// работаем с базой
+    err = db.Ping(context.Background())
+    if err != nil {
+        fmt.Println(err)
+    } else {
+        fmt.Println("Ping db is ok")
+    }
+    var (
+		UID string
+		shortID string
+		FullURL string
+	)
+    userid := "9999"
+    log.Fatalf("got error: %v", err)
+    log.Panicln("count equals 0", userid, UID)
+
+   // LEFT JOIN urls ON urls.shortID = users.shortID urls.FullURL
+    rows, err := db.Query(context.Background(), "SELECT usr.uid, usr.shortid, urls.fullurl FROM users as usr LEFT JOIN urls	ON urls.shortid = usr.shortid where uid=$1", userid)
+		if err != nil {
+			log.Println( err.Error())
+		}
+		// обязательно закрываем перед возвратом функции
+		defer rows.Close()
+        i := 0
+		// пробегаем по всем записям
+		for rows.Next() {
+			err := rows.Scan(&UID, &shortID, &FullURL)
+			if err != nil {
+				log.Fatal(err)
+			}
+            log.Println(UID, shortID, FullURL)
+            log.Println(i)
+            i++ 
+        }
+
+ /*   db1, err := sql.Open("postgres",
+    "postgres:1@tcp(127.0.0.1:5432)/gotoschool")
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer db1.Close()
+    err = db1.Ping()
+if err != nil {
+	// do something here
+    fmt.Println(err)
+} else {
+    fmt.Println("Ping ok")
+}
+
+*/
+ 
+// ...
+// можем продиагностировать соединение
+/*ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+defer cancel()
+if err = db.Ping(ctx); err != nil {
+    fmt.Println("ERROR Ping")
+    panic(err)
+}*/
+// в процессе работы
+}

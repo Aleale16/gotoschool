@@ -1,0 +1,141 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"sync"
+	"time"
+)
+var Input = make(chan string, 7)
+
+func printLengthChan(ch chan string){
+    for {
+        time.Sleep(time.Second * 1)
+        fmt.Printf("Length of channel Input is %v and capacity of channel c is %v\n", len(ch), cap(ch))
+    }
+}
+func readValuesfromChan(ch chan string){
+    for {
+        time.Sleep(time.Second * 3)
+        fmt.Printf("Reading value %v of channel Input", <-ch)
+    }
+}
+
+func getInputChan(listURLids []string) chan string {
+	// make return channel
+	
+	//var numbers []string
+
+	// sample numbers
+	//numbers := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+	for _, v := range listURLids {
+		log.Println(v)
+		//numbers = append(numbers, string(v))
+	}
+
+	// run goroutine
+	go func() {
+		for _, URLid := range listURLids {
+			Input <- URLid
+            log.Println("URLid channeled")
+		}
+		// close channel once all numbers are sent to channel
+		// close(input)
+	}()
+    //fmt.Printf("Length of channel c is %v and capacity of channel c is %v\n", len(Input), cap(Input))
+	return Input
+}
+
+
+func printAllChannel(c chan string) {
+	fmt.Printf("Length of channel printAllChannel is %v and capacity of channel c is %v\n", len(c), cap(c))
+    /*for val := range c {
+        fmt.Printf("Length of channel printAllChannel after value '%v' read is %v\n", val, len(c))
+    }*/
+}
+
+// Объединяем разные каналы в один канал
+func Merge(cs ...<-chan int) <-chan int {
+	var wg sync.WaitGroup
+  
+	out := make(chan int)
+  
+	// Запускаем send goroutine 
+	// для каждого входящего канала в cs. 
+	// send копирует значения из c в out 
+	// до тех пор пока c не закрыт, затем вызываем wg.Done.
+	send := func(c <-chan int) {
+	  for n := range c {
+		out <- n
+	  }
+	  wg.Done()
+	}
+  
+	wg.Add(len(cs))
+	for _, c := range cs {
+	  go send(c)
+	}
+  
+	// Запускаем goroutine чтобы закрыть out 
+	// когда все send goroutine выполнены
+	// Это должно начаться после вызова wg.Add.
+	go func() {
+	  wg.Wait()
+	  close(out)
+	}()
+	return out
+  }
+
+func main() {
+	somevars := []int{1, 2, 3, 4}
+//rows, err := db.Query("SELECT c1,c2 FROM table"+tid+" WHERE c1 = any($1);", pq.Array(somevars))
+    go printLengthChan(Input)
+    go readValuesfromChan(Input)
+    time.Sleep(time.Second * 2)
+    listURLids := []string{"A", "B", "C"}
+    go getInputChan(listURLids)
+   
+    time.Sleep(time.Second * 2)
+    listURLids = []string{"D", "E", "F", "G", "H", "I", "G"}
+    go getInputChan(listURLids)
+    select{ }
+	
+    
+    
+    //fmt.Print(chanInputIDs)
+  /*  time.Sleep(time.Second * 1)
+    go printAllChannel(getInputChan(listURLids))
+    
+	listURLids = []string{"d", "e", "f"}
+	//chanInputIDs = getInputChan(listURLids)
+
+    time.Sleep(time.Second * 1)
+	printAllChannel(getInputChan(listURLids))
+    time.Sleep(time.Second * 1)*/
+	//ch := make(chan int, 1)
+	/*go func() {
+	    for i := 0; i < 11; i++ {
+	        ch <- i
+	    }
+	    close(ch)
+	}()*/
+	/* for _ = range ch {
+	    select {
+	    case i := <-ch:
+	        fmt.Print(i)
+	    }
+	}*/
+	/*for v := range ch {
+	  k := <-ch
+	      fmt.Printf("v= %v \n", v)
+	      fmt.Printf("k= %v \n", k)
+	      }
+	*/
+	/*for v := range ch {
+	    select {
+	    case i := <-ch:
+	        fmt.Printf("v= %v \n", v)
+	        fmt.Printf("i= %v \n", i)
+	    }
+	}*/
+}

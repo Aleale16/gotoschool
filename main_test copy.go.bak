@@ -1,0 +1,67 @@
+package main
+
+import (
+	"fmt"
+	"testing"
+)
+
+
+
+func TestSum(t *testing.T) {
+    if sum := Sum(1, 2); sum != 3 {
+        t.Errorf("sum expected to be 3; got %d", sum)
+    }
+} 
+
+func TestAbs(t *testing.T) {
+    if abs := Abs(-99.9); abs < 0 {
+        t.Errorf("abs expected to be '+'; got %f", abs)
+    }
+    if abs := Abs(99.9); abs < 0 {
+        t.Errorf("abs expected to be '+'; got %f", abs)
+    }
+    if abs := Abs(0.0); abs != 0 {
+        t.Errorf("abs expected to be 0; got %f", abs)
+    }
+    tests := []struct { // добавился слайс тестов
+        name   string
+        value float64
+        want   float64
+    }{
+        {
+            name:   "with negative value", // описывается каждый тест
+            value: -99.9,      // значения, которые будет принимать функция
+            want:   99.9,                // ожидаемое значение
+        },
+        {
+            name:   "with positive value",
+            value: 99.9,
+            want:   99.9,
+        },
+        {
+            name:   "with zero",
+            value: 0.0,
+            want:   0.0,
+        },
+    }
+    for _, tt := range tests { // цикл по всем тестам
+        t.Run(tt.name, func(t *testing.T) {
+            if abs := Abs(tt.value); abs != tt.want {
+                t.Errorf("Abs() = %v, want %v", abs, tt.want)
+            }
+        })
+    }
+    fmt.Print(tests)
+}
+
+func TestFullName(t *testing.T) {
+    u := User{
+        FirstName: "Anna",
+        LastName:  "Smirnova",
+    }
+    if fn := u.FullName(); fn != "Anna Smirnova" {
+        t.Errorf("FullName expected to be 'Anna Smirnova'; got %s", fn)
+    }
+}
+
+

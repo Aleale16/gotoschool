@@ -1,0 +1,37 @@
+package main
+
+import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+)
+
+var secretkey = []byte("secret key")
+
+func main() {
+    var (
+        data []byte // декодированное сообщение с подписью
+        id   string // значение идентификатора
+        err  error
+        sign []byte // HMAC-подпись от идентификатора
+    )
+    msg := "048ff4ea240a9fdeac8f1422733e9f3b8b0291c969652225e25c5f0f9f8da654139c9e21"
+
+    // допишите код
+    data, err = hex.DecodeString(msg)
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println(data)
+    id = string((data[:4]))
+    h := hmac.New(sha256.New, secretkey)
+    h.Write(data[:4])
+    sign = h.Sum(nil)
+
+    if hmac.Equal(sign, data[4:]) {
+        fmt.Println("Подпись подлинная. ID:", id)
+    } else {
+        fmt.Println("Подпись неверна. Где-то ошибка")
+    }
+}

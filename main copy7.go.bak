@@ -1,0 +1,63 @@
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+    ch := make(chan int, 3)
+
+    go func() {
+        for i := 0; i < 21; i++ {
+            ch <- i
+        }
+        close(ch)
+    }()
+    for _ = range ch {
+        select {
+        case i := <-ch:
+            fmt.Print(i)
+        }
+    }
+   /* var wg sync.WaitGroup
+    var mu sync.Mutex
+
+        ch := make(chan int)
+    ch <- 10
+    fmt.Println(<-ch)
+
+    m := make(map[int]int)
+
+    wg.Add(100)
+
+    for i := 0; i < 100; i++ {
+        go func(v int) {
+           mu.Lock()
+            m[v] = v
+            mu.Unlock()
+            wg.Done()
+        }(i)
+    }
+    time.Sleep(1 * time.Second) // почему нужен таймер?
+    fmt.Println(len(m))*/
+
+ /*   go func() {
+        time.Sleep(50 * time.Millisecond)
+        fmt.Print(1)
+        wg.Done()
+    }()
+    wg.Add(-1)
+    go func() {
+        //time.Sleep(50 * time.Millisecond)
+        fmt.Print(2)
+        wg.Done()
+    }()
+    wg.Wait()
+  
+    fmt.Print(3)
+
+       // var mu sync.Mutex
+    m := make(map[int]int)
+
+*/
+} 

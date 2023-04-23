@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package hello;
+
+message Request {
+  string query = 1;  // запрос
+  int32  page  = 2;  // номер страницы
+  int32  limit = 3;  // количество записей
+} 
